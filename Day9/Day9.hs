@@ -10,9 +10,7 @@ readInput = fmap (map line . lines) . readFile
           where cToD c = read [c]
 
 task1 :: [[Int]] -> Int
-task1 nums = sum . map (sum . map ((1+) . fst)) $
-         map (filter snd) $ map (map isLow) nmap
--- ++ neighs (transpose nums)
+task1 nums = sum $ map ( sum . map ((1+) . fst) . filter snd . map isLow) nmap
   where
       isLow (n, r) = (n, all (n <) r)
       nmap = transpose $ map neighs2 $ transpose $ map neighs nums
