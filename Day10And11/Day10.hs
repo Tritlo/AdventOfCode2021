@@ -47,12 +47,11 @@ score2 = score2' 0
         sc _ = error "invalid character!"
 
 task2 :: [String] -> Int
-task2 lns = (sort scores) !! (length scores `div` 2)
+task2 lns = sort scores !! (length scores `div` 2)
     where
         completes :: [String]
         completes = mapMaybe task2P lns
         scores = map score2 completes
-
 
 
 main :: IO ()
