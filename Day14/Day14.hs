@@ -37,12 +37,14 @@ nsteps 0 rules pairs = pairs
 nsteps n rules pairs = nsteps (n-1) rules $ traceShow (n, length res) res
  where res = applyRules rules pairs
 
+task1 :: [Char] -> Map Char (Map Char Char) -> Int
 task1 template rules = maxl - minl
     where after = fromPairs $ nsteps 10 rules $ toPairs template
           lengths = map length $ group $ sort after
           minl = minimum lengths
           maxl = maximum lengths
 
+-- Exponential blowup!
 task2 :: [Char] -> Map Char (Map Char Char) -> Int
 task2 template rules = maxl - minl
     where after = fromPairs $ nsteps 40 rules $ toPairs template
@@ -66,9 +68,9 @@ task2v3 template rules = maxc - minc
                           | [(_,c),(_,_)] <- applyRule rules p,
                             mr <- Map.fromList $ zip [c] $ repeat 1
                             = (mr, Map.insert (p,1) mr memo)
-                          | otherwise = (Map.empty, Map.insert (p,0) Map.empty memo)
+                          | otherwise = (Map.empty, Map.insert (p,1) Map.empty memo)
           task2' n memo p@(a,b) | Just res <- memo Map.!? (p,n) = (res, memo)
-                                | [p1@(_,c),p2] <- applyRule rules p ,
+                                | [p1@(_,c),p2] <- applyRule rules p,
                                   (m1, m') <- task2' (n-1) memo p1,
                                   (m2, m'') <- task2' (n-1) m' p2,
                                   mr <- Map.unionsWith (+) [m1,m2,Map.singleton c 1]
