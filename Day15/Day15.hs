@@ -126,12 +126,45 @@ task2 inp = (v, pathToStr (fmap (map (s3 . nodeFromVertex)) p) indices)
       neighs2' [(nv,_), (n2,nn)] = [(n2,nv:nn)]
       neighs2' ((nv,_):n2@(nv2,nn):n3@(nv3,_):r) = (nv2, nv:nv3:nn):neighs2' (n2:n3:r)
 
-task2Big :: [[Int]] -> [[((Int, Int), (Int, Int), (Int, [Char]))]]
-task2Big nums = map task2v2 preprocced
+-- Doesn't work!
+-- We don't consider that going down then right is not the same as right
+-- and then down.
+task2Big nums = loop e2es [((0,0),0)]
     where
       preproc nums a = map (map f) nums
        where f n = if (a+n) <= 9 then a+n else ((a+n) `mod` 9)
       preprocced = map (preproc nums) [0..9]
+      e2es = zip preprocced $ map task2v2 preprocced
+      fromEdge edge = mapMaybe f
+        where f (a,b,(v,_)) | a == edge = Just (b,v)
+                            | b == edge = Just (a,v)
+                            | otherwise = Nothing
+      toOtherEdge nums (a,b) | a == 9 && b == 9 = [e1,e2]
+                             | a == 9 = [e1]
+                             | otherwise = [e2]
+        where e1 = ((0,b), (nums !! 0) !! b)
+              e2 = ((a,0), (nums !! a) !! b)
+      frEdgeToNextEdge nums edgSoFar = concatMap f2 edgSoFar
+        where f2 (e,v) = map ((v+) <$>) $ toOtherEdge nums e
+
+      loop [(n9@(n91:_),g9)] curShortest = lookup end takePaths
+         where ffe = flip fromEdge g9
+               end = (length n91-1,length n9 -1)
+               takePaths = map (minimumBy (compare `on` snd)) $
+                            groupBy ((==) `on` fst)$
+                            sortBy (compare `on` fst) $
+                            concatMap (\(cs,csv) -> (map ((csv+) <$>) $ ffe cs)) curShortest
+
+      loop ((n,g):r) curShortest = loop r toNex
+        where ffe = flip fromEdge g
+              takePaths = map (minimumBy (compare `on` snd)) $
+                            groupBy ((==) `on` fst)$
+                            sortBy (compare `on` fst) $
+                            concatMap (\(cs,csv) -> (map ((csv+) <$>) $ ffe cs)) curShortest
+              toNex = frEdgeToNextEdge n takePaths
+
+
+
 
 task2v2 :: [[Int]] -> [((Int, Int), (Int, Int), (Int, [Char]))]
 task2v2 nums@(fn:_) = map (\(a,b,(Just v, p)) -> (a,b,(v,p))) pairs
@@ -175,8 +208,5 @@ task2v2 nums@(fn:_) = map (\(a,b,(Just v, p)) -> (a,b,(v,p))) pairs
       neighs2' ((nv,_):n2@(nv2,nn):n3@(nv3,_):r) = (nv2, nv:nv3:nn):neighs2' (n2:n3:r)
 
 main :: IO ()
-main = do  (v,_) <- task2 <$> readInput "input"
+main = do  v <- task2Big <$> readInput "input"
            print v
-        --    print $ sum $ map (\(a,b, (v,p)) -> case v of{ Just n -> n; _ -> 0}) pairPaths
-        --    mapM_ (\(a,b, (Just v,p)) -> print (a,b,v) >> putStrLn p) pairPaths
-        --    putStrLn p
